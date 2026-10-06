@@ -3,21 +3,17 @@
 // LIVE WEATHER DASHBOARD
 // ==========================================
 
-const API_KEY = "c7ea3b1efbc297b9f7fa664338ff62f3";
+// Add your OpenWeatherMap API key here
+const API_KEY = "c1a854ec9086ae6df5f67230f7f4709b";
 
-const GEO_API =
-    "https://api.openweathermap.org/geo/1.0/direct";
-
+// API URLs
 const CURRENT_API =
     "https://api.openweathermap.org/data/2.5/weather";
 
 const FORECAST_API =
     "https://api.openweathermap.org/data/2.5/forecast";
 
-// ==========================================
-// DOM ELEMENTS
-// ==========================================
-
+// DOM Elements
 const cityInput = document.getElementById("cityInput");
 const searchBtn = document.getElementById("searchBtn");
 const errorMessage = document.getElementById("errorMessage");
@@ -39,20 +35,24 @@ const visibility = document.getElementById("visibility");
 const forecastContainer =
     document.getElementById("forecast");
 
+
 // ==========================================
-// EVENTS
+// EVENT LISTENERS
 // ==========================================
 
 searchBtn.addEventListener("click", searchWeather);
 
-cityInput.addEventListener("keydown", function (event) {
+cityInput.addEventListener("keydown", function(event) {
+
     if (event.key === "Enter") {
         searchWeather();
     }
+
 });
 
+
 // ==========================================
-// MAIN SEARCH FUNCTION
+// SEARCH WEATHER
 // ==========================================
 
 async function searchWeather() {
@@ -61,9 +61,20 @@ async function searchWeather() {
 
     errorMessage.textContent = "";
 
-    if (!city) {
+    // Validation
+    if (city === "") {
+
         errorMessage.textContent =
             "Please enter a city name.";
+
+        return;
+    }
+
+    if (API_KEY === "YOUR_API_KEY") {
+
+        errorMessage.textContent =
+            "Please add your OpenWeatherMap API key in script.js.";
+
         return;
     }
 
@@ -72,54 +83,31 @@ async function searchWeather() {
         searchBtn.textContent = "Loading...";
         searchBtn.disabled = true;
 
-        // ------------------------------------------
-        // STEP 1: Convert city name to coordinates
-        // ------------------------------------------
+        // Fetch current weather
+        const currentData = await getCurrentWeather(city);
 
-        const location = await getCoordinates(city);
+        // Fetch forecast
+        const forecastData = await getForecast(city);
 
-        // ------------------------------------------
-        // STEP 2: Get current weather
-        // ------------------------------------------
+        // Display data
+        displayCurrentWeather(currentData);
 
-        const currentWeather =
-            await getCurrentWeather(
-                location.lat,
-                location.lon
-            );
+        displayForecast(forecastData);
 
-        // ------------------------------------------
-        // STEP 3: Get 5-day forecast
-        // ------------------------------------------
+    }
 
-        const forecast =
-            await getForecast(
-                location.lat,
-                location.lon
-            );
+    catch (error) {
 
-        // ------------------------------------------
-        // STEP 4: Display data
-        // ------------------------------------------
-
-        displayCurrentWeather(
-            currentWeather,
-            location
-        );
-
-        displayForecast(forecast);
-
-    } catch (error) {
-
-        console.error("Weather Error:", error);
+        console.error(error);
 
         errorMessage.textContent =
-            error.message ||
-            "Unable to load weather data.";
+            "City not found or weather data unavailable.";
 
         clearWeather();
 
-    } finally {
+    }
+
+    finally {
 
         searchBtn.textContent = "Search";
         searchBtn.disabled = false;
@@ -127,92 +115,57 @@ async function searchWeather() {
     }
 }
 
+
 // ==========================================
-// GET CITY COORDINATES
+// FETCH CURRENT WEATHER
 // ==========================================
 
-async function getCoordinates(city) {
+async function getCurrentWeather(city) {
 
     const url =
-        `${GEO_API}?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`;
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error(
-            `Geocoding error: ${response.status}`
-        );
-    }
-
-    const data = await response.json();
-
-    if (!data || data.length === 0) {
-        throw new Error(
-            `City "${city}" was not found.`
-        );
-    }
-
-    return data[0];
-}
-
-// ==========================================
-// CURRENT WEATHER
-// ==========================================
-
-async function getCurrentWeather(lat, lon) {
-
-    const url =
-        `${CURRENT_API}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+        `${c1a854ec9086ae6df5f67230f7f4709b}?q=${encodeURIComponent(city)}&appid=${c1a854ec9086ae6df5f67230f7f4709b}&units=metric`;
 
     const response = await fetch(url);
 
     if (!response.ok) {
 
-        const errorData = await response.json()
-            .catch(() => ({}));
+        throw new Error("City not found");
 
-        throw new Error(
-            errorData.message ||
-            `Weather API error: ${response.status}`
-        );
     }
 
     return await response.json();
 }
 
+
 // ==========================================
-// 5-DAY FORECAST
+// FETCH 5-DAY FORECAST
 // ==========================================
 
-async function getForecast(lat, lon) {
+async function getForecast(city) {
 
     const url =
-        `${FORECAST_API}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+        `${c1a854ec9086ae6df5f67230f7f4709b}?q=${encodeURIComponent(city)}&appid=${c1a854ec9086ae6df5f67230f7f4709b}&units=metric`;
 
     const response = await fetch(url);
 
     if (!response.ok) {
 
-        const errorData = await response.json()
-            .catch(() => ({}));
+        throw new Error("Forecast unavailable");
 
-        throw new Error(
-            errorData.message ||
-            `Forecast API error: ${response.status}`
-        );
     }
 
     return await response.json();
 }
+
 
 // ==========================================
 // DISPLAY CURRENT WEATHER
 // ==========================================
 
-function displayCurrentWeather(data, location) {
+function displayCurrentWeather(data) {
 
     cityName.textContent =
-        `${location.name}, ${location.country}`;
+        `${data.name}, ${data.sys.country}`;
 
     date.textContent =
         formatDate(new Date());
@@ -233,9 +186,7 @@ function displayCurrentWeather(data, location) {
         `${data.main.pressure} hPa`;
 
     visibility.textContent =
-        data.visibility
-            ? `${(data.visibility / 1000).toFixed(1)} km`
-            : "-- km";
+        `${(data.visibility / 1000).toFixed(1)} km`;
 
     weatherDescription.textContent =
         data.weather[0].description;
@@ -250,6 +201,7 @@ function displayCurrentWeather(data, location) {
         data.weather[0].description;
 }
 
+
 // ==========================================
 // DISPLAY FORECAST
 // ==========================================
@@ -258,6 +210,10 @@ function displayForecast(data) {
 
     forecastContainer.innerHTML = "";
 
+    // OpenWeather gives data every 3 hours.
+    // Select one forecast for approximately
+    // each day.
+
     const dailyForecasts = {};
 
     data.list.forEach(item => {
@@ -265,9 +221,10 @@ function displayForecast(data) {
         const dateKey =
             item.dt_txt.split(" ")[0];
 
-        // Take one forecast per day
         if (!dailyForecasts[dateKey]) {
+
             dailyForecasts[dateKey] = item;
+
         }
 
     });
@@ -277,10 +234,11 @@ function displayForecast(data) {
 
     days.forEach(day => {
 
-        const card =
+        const forecastCard =
             document.createElement("div");
 
-        card.className = "forecast-card";
+        forecastCard.className =
+            "forecast-card";
 
         const dayName =
             new Date(day.dt * 1000)
@@ -288,19 +246,16 @@ function displayForecast(data) {
                     weekday: "short"
                 });
 
-        const icon =
+        const iconCode =
             day.weather[0].icon;
 
-        const description =
-            day.weather[0].description;
-
-        card.innerHTML = `
+        forecastCard.innerHTML = `
 
             <h3>${dayName}</h3>
 
             <img
-                src="https://openweathermap.org/img/wn/${icon}@2x.png"
-                alt="${description}"
+                src="https://openweathermap.org/img/wn/${iconCode}@2x.png"
+                alt="${day.weather[0].description}"
             >
 
             <div class="forecast-temp">
@@ -308,18 +263,21 @@ function displayForecast(data) {
             </div>
 
             <div class="forecast-description">
-                ${description}
+                ${day.weather[0].description}
             </div>
 
         `;
 
-        forecastContainer.appendChild(card);
+        forecastContainer.appendChild(
+            forecastCard
+        );
 
     });
 }
 
+
 // ==========================================
-// DATE
+// FORMAT DATE
 // ==========================================
 
 function formatDate(dateObject) {
@@ -333,51 +291,42 @@ function formatDate(dateObject) {
             day: "numeric"
         }
     );
+
 }
 
+
 // ==========================================
-// CLEAR WEATHER
+// CLEAR WEATHER DATA
 // ==========================================
 
 function clearWeather() {
 
-    cityName.textContent =
-        "Search a city";
+    cityName.textContent = "Search a city";
+    date.textContent = "--";
 
-    date.textContent =
-        "--";
+    temperature.textContent = "--";
+    feelsLike.textContent = "--";
+    humidity.textContent = "--%";
+    wind.textContent = "-- m/s";
+    pressure.textContent = "-- hPa";
+    visibility.textContent = "-- km";
 
-    temperature.textContent =
-        "--";
-
-    feelsLike.textContent =
-        "--";
-
-    humidity.textContent =
-        "--%";
-
-    wind.textContent =
-        "-- m/s";
-
-    pressure.textContent =
-        "-- hPa";
-
-    visibility.textContent =
-        "-- km";
-
-    weatherDescription.textContent =
-        "--";
+    weatherDescription.textContent = "--";
 
     weatherIcon.src = "";
 
     forecastContainer.innerHTML = "";
+
 }
+
 
 // ==========================================
 // DEFAULT CITY
 // ==========================================
 
+// Change this to any city you want.
 cityInput.value = "Nashik";
 
+// Load default weather
 searchWeather();
 ```
