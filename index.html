@@ -1,0 +1,122 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Weather Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <header class="header">
+            <div>
+                <h1>☁️ WeatherNow</h1>
+                <p>Live weather & 5-day forecast</p>
+            </div>
+
+            <div class="search-box">
+                <input
+                    type="text"
+                    id="cityInput"
+                    placeholder="Enter city name..."
+                    autocomplete="off"
+                >
+                <button id="searchBtn">Search</button>
+            </div>
+        </header>
+
+        <p id="errorMessage" class="error"></p>
+
+        <main id="weatherContainer">
+
+            <section class="current-weather">
+
+                <div class="location">
+                    <span>📍</span>
+                    <div>
+                        <h2 id="cityName">Search a city</h2>
+                        <p id="date">--</p>
+                    </div>
+                </div>
+
+                <div class="weather-main">
+
+                    <div class="temperature">
+                        <img id="weatherIcon" src="" alt="Weather icon">
+                        <div>
+                            <span id="temperature">--</span>
+                            <span class="degree">°C</span>
+                        </div>
+                    </div>
+
+                    <div class="description">
+                        <h3 id="weatherDescription">--</h3>
+                        <p>Feels like <span id="feelsLike">--</span>°C</p>
+                    </div>
+
+                </div>
+
+                <div class="weather-details">
+
+                    <div class="detail-card">
+                        <span>💧</span>
+                        <div>
+                            <small>Humidity</small>
+                            <strong id="humidity">--%</strong>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <span>💨</span>
+                        <div>
+                            <small>Wind Speed</small>
+                            <strong id="wind">-- m/s</strong>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <span>🌡️</span>
+                        <div>
+                            <small>Pressure</small>
+                            <strong id="pressure">-- hPa</strong>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <span>👁️</span>
+                        <div>
+                            <small>Visibility</small>
+                            <strong id="visibility">-- km</strong>
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="forecast-section">
+
+                <div class="section-title">
+                    <h2>5-Day Forecast</h2>
+                    <span>Daily weather</span>
+                </div>
+
+                <div id="forecast" class="forecast-grid"></div>
+
+            </section>
+
+        </main>
+
+        <footer>
+            <p>WeatherNow • Powered by OpenWeatherMap</p>
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
