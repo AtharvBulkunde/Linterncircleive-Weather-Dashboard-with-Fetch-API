@@ -3,17 +3,21 @@
 // LIVE WEATHER DASHBOARD
 // ==========================================
 
-// OpenWeatherMap API key
 const API_KEY = "c7ea3b1efbc297b9f7fa664338ff62f3";
 
-// API URLs
+const GEO_API =
+    "https://api.openweathermap.org/geo/1.0/direct";
+
 const CURRENT_API =
     "https://api.openweathermap.org/data/2.5/weather";
 
 const FORECAST_API =
     "https://api.openweathermap.org/data/2.5/forecast";
 
-// DOM Elements
+// ==========================================
+// DOM ELEMENTS
+// ==========================================
+
 const cityInput = document.getElementById("cityInput");
 const searchBtn = document.getElementById("searchBtn");
 const errorMessage = document.getElementById("errorMessage");
@@ -35,24 +39,20 @@ const visibility = document.getElementById("visibility");
 const forecastContainer =
     document.getElementById("forecast");
 
-
 // ==========================================
-// EVENT LISTENERS
+// EVENTS
 // ==========================================
 
 searchBtn.addEventListener("click", searchWeather);
 
-cityInput.addEventListener("keydown", function(event) {
-
+cityInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") {
         searchWeather();
     }
-
 });
 
-
 // ==========================================
-// SEARCH WEATHER
+// MAIN SEARCH FUNCTION
 // ==========================================
 
 async function searchWeather() {
@@ -61,20 +61,9 @@ async function searchWeather() {
 
     errorMessage.textContent = "";
 
-    // Validation
-    if (city === "") {
-
+    if (!city) {
         errorMessage.textContent =
             "Please enter a city name.";
-
-        return;
-    }
-
-    if (API_KEY === "YOUR_API_KEY") {
-
-        errorMessage.textContent =
-            "Please add your OpenWeatherMap API key in script.js.";
-
         return;
     }
 
@@ -83,31 +72,54 @@ async function searchWeather() {
         searchBtn.textContent = "Loading...";
         searchBtn.disabled = true;
 
-        // Fetch current weather
-        const currentData = await getCurrentWeather(city);
+        // ------------------------------------------
+        // STEP 1: Convert city name to coordinates
+        // ------------------------------------------
 
-        // Fetch forecast
-        const forecastData = await getForecast(city);
+        const location = await getCoordinates(city);
 
-        // Display data
-        displayCurrentWeather(currentData);
+        // ------------------------------------------
+        // STEP 2: Get current weather
+        // ------------------------------------------
 
-        displayForecast(forecastData);
+        const currentWeather =
+            await getCurrentWeather(
+                location.lat,
+                location.lon
+            );
 
-    }
+        // ------------------------------------------
+        // STEP 3: Get 5-day forecast
+        // ------------------------------------------
 
-    catch (error) {
+        const forecast =
+            await getForecast(
+                location.lat,
+                location.lon
+            );
 
-        console.error(error);
+        // ------------------------------------------
+        // STEP 4: Display data
+        // ------------------------------------------
+
+        displayCurrentWeather(
+            currentWeather,
+            location
+        );
+
+        displayForecast(forecast);
+
+    } catch (error) {
+
+        console.error("Weather Error:", error);
 
         errorMessage.textContent =
-            "City not found or weather data unavailable.";
+            error.message ||
+            "Unable to load weather data.";
 
         clearWeather();
 
-    }
-
-    finally {
+    } finally {
 
         searchBtn.textContent = "Search";
         searchBtn.disabled = false;
@@ -115,57 +127,92 @@ async function searchWeather() {
     }
 }
 
-
 // ==========================================
-// FETCH CURRENT WEATHER
+// GET CITY COORDINATES
 // ==========================================
 
-async function getCurrentWeather(city) {
+async function getCoordinates(city) {
 
     const url =
-        `${CURRENT_API}?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`;
+        `${GEO_API}?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(
+            `Geocoding error: ${response.status}`
+        );
+    }
+
+    const data = await response.json();
+
+    if (!data || data.length === 0) {
+        throw new Error(
+            `City "${city}" was not found.`
+        );
+    }
+
+    return data[0];
+}
+
+// ==========================================
+// CURRENT WEATHER
+// ==========================================
+
+async function getCurrentWeather(lat, lon) {
+
+    const url =
+        `${CURRENT_API}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
 
     const response = await fetch(url);
 
     if (!response.ok) {
 
-        throw new Error("City not found");
+        const errorData = await response.json()
+            .catch(() => ({}));
 
+        throw new Error(
+            errorData.message ||
+            `Weather API error: ${response.status}`
+        );
     }
 
     return await response.json();
 }
 
-
 // ==========================================
-// FETCH 5-DAY FORECAST
+// 5-DAY FORECAST
 // ==========================================
 
-async function getForecast(city) {
+async function getForecast(lat, lon) {
 
     const url =
-        `${FORECAST_API}?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`;
+        `${FORECAST_API}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
 
     const response = await fetch(url);
 
     if (!response.ok) {
 
-        throw new Error("Forecast unavailable");
+        const errorData = await response.json()
+            .catch(() => ({}));
 
+        throw new Error(
+            errorData.message ||
+            `Forecast API error: ${response.status}`
+        );
     }
 
     return await response.json();
 }
-
 
 // ==========================================
 // DISPLAY CURRENT WEATHER
 // ==========================================
 
-function displayCurrentWeather(data) {
+function displayCurrentWeather(data, location) {
 
     cityName.textContent =
-        `${data.name}, ${data.sys.country}`;
+        `${location.name}, ${location.country}`;
 
     date.textContent =
         formatDate(new Date());
@@ -186,7 +233,9 @@ function displayCurrentWeather(data) {
         `${data.main.pressure} hPa`;
 
     visibility.textContent =
-        `${(data.visibility / 1000).toFixed(1)} km`;
+        data.visibility
+            ? `${(data.visibility / 1000).toFixed(1)} km`
+            : "-- km";
 
     weatherDescription.textContent =
         data.weather[0].description;
@@ -200,7 +249,6 @@ function displayCurrentWeather(data) {
     weatherIcon.alt =
         data.weather[0].description;
 }
-
 
 // ==========================================
 // DISPLAY FORECAST
@@ -217,10 +265,9 @@ function displayForecast(data) {
         const dateKey =
             item.dt_txt.split(" ")[0];
 
+        // Take one forecast per day
         if (!dailyForecasts[dateKey]) {
-
             dailyForecasts[dateKey] = item;
-
         }
 
     });
@@ -230,11 +277,10 @@ function displayForecast(data) {
 
     days.forEach(day => {
 
-        const forecastCard =
+        const card =
             document.createElement("div");
 
-        forecastCard.className =
-            "forecast-card";
+        card.className = "forecast-card";
 
         const dayName =
             new Date(day.dt * 1000)
@@ -242,16 +288,19 @@ function displayForecast(data) {
                     weekday: "short"
                 });
 
-        const iconCode =
+        const icon =
             day.weather[0].icon;
 
-        forecastCard.innerHTML = `
+        const description =
+            day.weather[0].description;
+
+        card.innerHTML = `
 
             <h3>${dayName}</h3>
 
             <img
-                src="https://openweathermap.org/img/wn/${iconCode}@2x.png"
-                alt="${day.weather[0].description}"
+                src="https://openweathermap.org/img/wn/${icon}@2x.png"
+                alt="${description}"
             >
 
             <div class="forecast-temp">
@@ -259,21 +308,18 @@ function displayForecast(data) {
             </div>
 
             <div class="forecast-description">
-                ${day.weather[0].description}
+                ${description}
             </div>
 
         `;
 
-        forecastContainer.appendChild(
-            forecastCard
-        );
+        forecastContainer.appendChild(card);
 
     });
 }
 
-
 // ==========================================
-// FORMAT DATE
+// DATE
 // ==========================================
 
 function formatDate(dateObject) {
@@ -287,42 +333,51 @@ function formatDate(dateObject) {
             day: "numeric"
         }
     );
-
 }
 
-
 // ==========================================
-// CLEAR WEATHER DATA
+// CLEAR WEATHER
 // ==========================================
 
 function clearWeather() {
 
-    cityName.textContent = "Search a city";
-    date.textContent = "--";
+    cityName.textContent =
+        "Search a city";
 
-    temperature.textContent = "--";
-    feelsLike.textContent = "--";
-    humidity.textContent = "--%";
-    wind.textContent = "-- m/s";
-    pressure.textContent = "-- hPa";
-    visibility.textContent = "-- km";
+    date.textContent =
+        "--";
 
-    weatherDescription.textContent = "--";
+    temperature.textContent =
+        "--";
+
+    feelsLike.textContent =
+        "--";
+
+    humidity.textContent =
+        "--%";
+
+    wind.textContent =
+        "-- m/s";
+
+    pressure.textContent =
+        "-- hPa";
+
+    visibility.textContent =
+        "-- km";
+
+    weatherDescription.textContent =
+        "--";
 
     weatherIcon.src = "";
 
     forecastContainer.innerHTML = "";
-
 }
-
 
 // ==========================================
 // DEFAULT CITY
 // ==========================================
 
-// Default city
 cityInput.value = "Nashik";
 
-// Load default weather
 searchWeather();
 ```
