@@ -14,7 +14,7 @@
         <input
           type="text"
           id="city-input"
-          placeholder="Enter city name (e.g. London)"
+          placeholder="Search any city (e.g. Mumbai)"
           aria-label="City name"
         />
         <button type="submit">Search</button>
@@ -22,8 +22,39 @@
       <p id="error-msg" class="error" role="alert"></p>
     </header>
 
+    <!-- Default cities: Nashik & Pune -->
+    <section class="default-cities">
+      <div class="city-card" id="card-nashik">
+        <h2>Nashik</h2>
+        <p class="country muted">Maharashtra, India</p>
+        <div class="city-body">
+          <img class="icon" src="" alt="weather icon" />
+          <div>
+            <p class="temp">--°C</p>
+            <p class="desc muted">--</p>
+            <p class="extra muted small">--</p>
+          </div>
+        </div>
+        <div class="mini-forecast"></div>
+      </div>
+
+      <div class="city-card" id="card-pune">
+        <h2>Pune</h2>
+        <p class="country muted">Maharashtra, India</p>
+        <div class="city-body">
+          <img class="icon" src="" alt="weather icon" />
+          <div>
+            <p class="temp">--°C</p>
+            <p class="desc muted">--</p>
+            <p class="extra muted small">--</p>
+          </div>
+        </div>
+        <div class="mini-forecast"></div>
+      </div>
+    </section>
+
+    <!-- Search result (hidden until user searches) -->
     <main id="dashboard" class="hidden">
-      <!-- Current Weather -->
       <section id="current" class="card current">
         <h2 id="city-name">—</h2>
         <p id="country" class="muted"></p>
@@ -37,7 +68,6 @@
         </div>
       </section>
 
-      <!-- 5-Day Forecast -->
       <section id="forecast" class="forecast">
         <h3>5-Day Forecast</h3>
         <div id="forecast-grid" class="forecast-grid"></div>
